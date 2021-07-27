@@ -7,3 +7,4 @@
 # Directories
 /__pycache__
 /cache
+/models
