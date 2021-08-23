@@ -5,6 +5,7 @@ from PIL import Image
 import os
 import os.path
 import math
+import random
 
 def has_file_allowed_extension(filename, extensions):
     """Checks if a file is an allowed extension.
@@ -129,7 +130,10 @@ class MultirootDatasetFolder(data.Dataset):
 
         classes.sort()
         num_classes = math.ceil(len(classes) * fraction)
-        classes = classes[:num_classes]
+        start_ind = random.randint(0, len(classes)-num_classes-1)
+        print('Class start index:', start_ind)
+
+        classes = classes[start_ind:(start_ind+num_classes)]
         class_to_idx = {classes[i]: i for i in range(len(classes))}
         return classes, class_to_idx
 

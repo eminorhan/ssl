@@ -15,16 +15,17 @@ from utils import train, validate, adjust_learning_rate
 
 parser = argparse.ArgumentParser(description='ImageNet fine-tuning or linear classification')
 parser.add_argument('--imgnet-basedir', default='/misc/vlgscratch4/LakeGroup/emin/robust_vision/imagenet/', type=str, help='path to ImageNet')
+parser.add_argument('--model', default='resnext101_32x8d', choices=['resnext101_32x8d', 'resnext50_32x4d'], help='model')
 parser.add_argument('--workers', default=8, type=int, help='number of data loading workers (default: 32)')
 parser.add_argument('--epochs', default=30, type=int, help='number of total epochs to run')
 parser.add_argument('--start-epoch', default=0, type=int, help='manual epoch number (useful on restarts)')
 parser.add_argument('--batch-size', default=256, type=int, help='mini-batch size (default: 256)')
+parser.add_argument('--n_out', default=1000, type=int, help='output dim of pretrained model')
 parser.add_argument('--lr', default=0.0005, type=float, help='initial learning rate')
 parser.add_argument('--weight-decay', default=0.0, type=float, help='weight decay (default: 0)')
 parser.add_argument('--print-freq', default=5000, type=int, help='print frequency (default: 5000)')
 parser.add_argument('--schedule', default=[27, 29], nargs='*', type=int, help='learning rate schedule (when to drop lr by a ratio)')
 parser.add_argument('--resume', default='', type=str, metavar='PATH', help='path to latest checkpoint (default: none)')
-parser.add_argument('--n_out', default=20, type=int, help='output dim')
 parser.add_argument('--freeze-trunk', default=False, action='store_true', help='freeze trunk?')
 parser.add_argument('--frac-retained', default=1.0, type=float, help='fraction of tr data retained')
 parser.add_argument('--strong-augment', default=False, action='store_true', help='use strong data augmentation')
@@ -43,7 +44,7 @@ def main():
     args = parser.parse_args()
     print(args)
 
-    model = models.resnext101_32x8d(pretrained=False)
+    model = models.__dict__[args.model](pretrained=False)
     model.fc = torch.nn.Linear(in_features=2048, out_features=args.n_out, bias=True)
 
     # DataParallel will divide and allocate batch_size to all available GPUs

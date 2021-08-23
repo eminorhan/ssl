@@ -75,7 +75,7 @@ def get_args_parser():
         help='Number of warmup epochs for the teacher temperature (Default: 30).')
 
     # Training/Optimization parameters
-    parser.add_argument('--use_fp16', type=dino_utils.bool_flag, default=True, help="""Whether or not
+    parser.add_argument('--use_fp16', type=dino_utils.bool_flag, default=False, help="""Whether or not
         to use half precision for training. Improves training time and memory requirements,
         but can provoke instability and slight decay of performance. We recommend disabling
         mixed precision if the loss is unstable, if reducing the patch size or if training with bigger ViTs.""")
@@ -84,7 +84,7 @@ def get_args_parser():
     parser.add_argument('--weight_decay_end', type=float, default=0.0, help="""Final value of the
         weight decay. We use a cosine schedule for WD and using a larger decay by
         the end of training improves performance for ViTs.""")
-    parser.add_argument('--clip_grad', type=float, default=0.5, help="""Maximal parameter
+    parser.add_argument('--clip_grad', type=float, default=1.0, help="""Maximal parameter
         gradient norm if using gradient clipping. Clipping with norm .3 ~ 1.0 can
         help optimization for larger ViT architectures. 0 for disabling.""")
     parser.add_argument('--batch_size_per_gpu', default=64, type=int,
@@ -120,6 +120,7 @@ def get_args_parser():
     parser.add_argument('--cache_path', default='', type=str, help='Cache path for the training set for quicker initialization')
     parser.add_argument('--output_dir', default=".", type=str, help='Path to save logs and checkpoints.')
     parser.add_argument('--saveckp_freq', default=1, type=int, help='Save checkpoint every x epochs.')
+    parser.add_argument('--print_freq', default=1000, type=int, help='Print every x iterations.')
     parser.add_argument('--seed', default=0, type=int, help='Random seed.')
     parser.add_argument('--num_workers', default=10, type=int, help='Number of data loading workers per GPU.')
     parser.add_argument("--dist_url", default="env://", type=str, help="""url used to set up
@@ -237,7 +238,7 @@ def train_dino(args):
 
     # ============ init schedulers ... ============
     lr_schedule = dino_utils.cosine_scheduler(
-        args.lr * (args.batch_size_per_gpu * dino_utils.get_world_size()) / 256.,  # linear scaling rule  # TODO: fix warmup
+        args.lr * (args.batch_size_per_gpu * dino_utils.get_world_size()) / 208.,  # linear scaling rule  # TODO: fix warmup
         args.min_lr,
         args.epochs, len(data_loader),
         warmup_epochs=args.warmup_epochs,
@@ -248,8 +249,7 @@ def train_dino(args):
         args.epochs, len(data_loader),
     )
     # momentum parameter is increased to 1. during training with a cosine schedule
-    momentum_schedule = dino_utils.cosine_scheduler(args.momentum_teacher, 1,
-                                               args.epochs, len(data_loader))
+    momentum_schedule = dino_utils.cosine_scheduler(args.momentum_teacher, 1, args.epochs, len(data_loader))
     print(f"Loss, optimizer and schedulers ready.")
 
     # ============ optionally resume training ... ============
@@ -304,7 +304,7 @@ def train_one_epoch(student, teacher, teacher_without_ddp, dino_loss, data_loade
                     fp16_scaler, args):
     metric_logger = dino_utils.MetricLogger(delimiter="  ")
     header = 'Epoch: [{}/{}]'.format(epoch, args.epochs)
-    for it, (images, _) in enumerate(metric_logger.log_every(data_loader, 10000, header)):
+    for it, (images, _) in enumerate(metric_logger.log_every(data_loader, args.print_freq, header)):
         # update weight decay and learning rate according to their schedule
         it = len(data_loader) * epoch + it  # global training iteration
         for i, param_group in enumerate(optimizer.param_groups):

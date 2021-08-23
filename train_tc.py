@@ -5,12 +5,13 @@ import torch
 import torchvision
 import torch.backends.cudnn as cudnn
 import torchvision.transforms as transforms
-from utils import train, GaussianBlur
+from utils import train, set_seed, GaussianBlur
 from multiroot_image_folder import MultirootImageFolder
 
 parser = argparse.ArgumentParser(description='Temporal classification training with headcam data')
 parser.add_argument('--data-dirs', nargs='+', help='list of paths to datasets')
-parser.add_argument('--model', default='resnext101_32x8d', choices=['resnext101_32x8d', 'mobilenet_v2'], help='model')
+parser.add_argument('--model', default='resnext101_32x8d', choices=['resnext101_32x8d', 'resnext50_32x4d'], help='model')
+parser.add_argument('--seed', default=1, type=int, help='random seed')
 parser.add_argument('--workers', default=8, type=int, help='number of data loading workers (default: 8)')
 parser.add_argument('--epochs', default=100, type=int, help='number of total epochs to run')
 parser.add_argument('--start-epoch', default=0, type=int, help='starts training from this epoch')
@@ -30,11 +31,11 @@ def main():
     args = parser.parse_args()
     print(args)
 
-    model = torchvision.models.__dict__[args.model](pretrained=False)
-    if args.model.startswith('res'):
-        model.fc = torch.nn.Linear(in_features=2048, out_features=args.n_out, bias=True)
-    else:
-        model.classifier = torch.nn.Linear(in_features=1280, out_features=args.n_out, bias=True)
+    # set random seed
+    set_seed(args.seed)
+
+    model = torchvision.models.__dict__[args.model](pretrained=False, num_classes=args.n_out)
+    model.fc = torch.nn.Linear(in_features=2048, out_features=args.n_out, bias=True)
 
     # DataParallel will divide and allocate batch_size to all available GPUs
     model = torch.nn.DataParallel(model).cuda()
@@ -90,7 +91,7 @@ def main():
     print('Loader size:', len(train_loader))
     print('Number of classes:', len(train_dataset.classes))
 
-    savefile_name = 'TC_{}_{}_{}'.format(args.subject, args.model, args.class_fraction)
+    savefile_name = 'TC_{}_{}_{}_{}'.format(args.subject, args.model, args.class_fraction, args.seed)
 
     acc1_list = []
 

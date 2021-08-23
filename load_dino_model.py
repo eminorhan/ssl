@@ -30,4 +30,6 @@ def load_dino_model(model, checkpoint_path, verbose=False):
 
     model.load_state_dict(new_student_state_dict)
 
+    print(model)
+
     return model
