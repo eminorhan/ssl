@@ -8,12 +8,12 @@ import torchvision.transforms as transforms
 from utils import train, set_seed, GaussianBlur
 from multiroot_image_folder import MultirootImageFolder
 
-parser = argparse.ArgumentParser(description='Temporal classification training with headcam data')
+parser = argparse.ArgumentParser(description='Temporal classification training with video data')
 parser.add_argument('--data-dirs', nargs='+', help='list of paths to datasets')
 parser.add_argument('--model', default='resnext101_32x8d', choices=['resnext101_32x8d', 'resnext50_32x4d'], help='model')
 parser.add_argument('--seed', default=1, type=int, help='random seed')
 parser.add_argument('--workers', default=8, type=int, help='number of data loading workers (default: 8)')
-parser.add_argument('--epochs', default=100, type=int, help='number of total epochs to run')
+parser.add_argument('--epochs', default=15, type=int, help='number of total epochs to run')
 parser.add_argument('--start-epoch', default=0, type=int, help='starts training from this epoch')
 parser.add_argument('--batch-size', default=256, type=int, help='mini-batch size (default: 256)')
 parser.add_argument('--lr', default=0.0005, type=float, help='initial learning rate')
@@ -55,11 +55,11 @@ def main():
         else:
             print("=> no checkpoint found at '{}'".format(args.resume))
 
-    normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+    normalize = transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.2, 0.2, 0.2])
 
     if args.augmentation:
         train_transforms = transforms.Compose([
-            transforms.RandomResizedCrop(224, scale=(0.08, 1.0)),
+            transforms.RandomResizedCrop(256, scale=(0.09, 1.0), ratio=(1.0, 1.0)),
             transforms.RandomApply([transforms.ColorJitter(0.9, 0.9, 0.9, 0.5)], p=0.9),
             transforms.RandomGrayscale(p=0.2),
             transforms.RandomApply([GaussianBlur([0.1, 2.0])], p=0.5),

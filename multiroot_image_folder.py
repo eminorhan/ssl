@@ -129,11 +129,13 @@ class MultirootDatasetFolder(data.Dataset):
             classes = classes + [os.path.join(dir, d.name) for d in os.scandir(dir) if d.is_dir()]
 
         classes.sort()
-        num_classes = math.ceil(len(classes) * fraction)
-        start_ind = random.randint(0, len(classes)-num_classes-1)
-        print('Class start index:', start_ind)
+        
+        if fraction < 1.0:
+            num_classes = math.ceil(len(classes) * fraction)
+            start_ind = random.randint(0, len(classes)-num_classes-1)
+            print('Class start index:', start_ind)
+            classes = classes[start_ind:(start_ind+num_classes)]
 
-        classes = classes[start_ind:(start_ind+num_classes)]
         class_to_idx = {classes[i]: i for i in range(len(classes))}
         return classes, class_to_idx
 
@@ -152,7 +154,7 @@ class MultirootDatasetFolder(data.Dataset):
         if self.target_transform is not None:
             target = self.target_transform(target)
 
-        return sample, target
+        return sample, target, index
 
     def __len__(self):
         return len(self.samples)
