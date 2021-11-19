@@ -3,7 +3,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=8
 #SBATCH --gres=gpu:titanrtx:2
-#SBATCH --mem=250GB
+#SBATCH --mem=200GB
 #SBATCH --time=48:00:00
 #SBATCH --array=0
 #SBATCH --job-name=train_tc_av

@@ -152,7 +152,7 @@ def train_av(vision_loader, audio_loader, model, criterion, optimizer, epoch, ar
     model.train()
 
     end = time.time()
-    for i, ((images, target, _), (sounds, _, _)) in enumerate(zip(vision_loader, audio_loader)):
+    for i, ((images, target, v_idx), (sounds, _, a_idx)) in enumerate(zip(vision_loader, audio_loader)):
         
         # measure data loading time
         data_time.update(time.time() - end)
@@ -239,9 +239,13 @@ def load_dataloader(augmentation, data_cache, data_dirs, args):
         dataset = MultirootImageFolder(data_dirs, args.class_fraction, transforms)
         torch.save(dataset, data_cache)
 
+    # this makes sure the same indices are used for both audio and vision batches
+    g = torch.Generator()
+    g.manual_seed(args.seed)
+
     loader = torch.utils.data.DataLoader(
         dataset, batch_size=args.batch_size, shuffle=True,
-        num_workers=args.workers, pin_memory=True, sampler=None
+        num_workers=args.workers, pin_memory=True, generator=g, sampler=None
     )
 
     ## print some info about data

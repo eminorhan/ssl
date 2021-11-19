@@ -47,7 +47,7 @@ def main():
     vision_model.fc = Identity()
 
     # set up projection head
-    projection_head = Sequential(Linear(in_features=4096, out_features=2048, bias=True), 
+    projection_head = Sequential(Linear(in_features=2048+512, out_features=2048, bias=True), 
                                 ReLU(), 
                                 Linear(in_features=2048, out_features=args.n_out, bias=True)
                                 )
