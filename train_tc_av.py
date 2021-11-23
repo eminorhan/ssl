@@ -15,7 +15,7 @@ parser.add_argument('--audio_model', default='resnet18', choices=['resnext101_32
 parser.add_argument('--vision_model', default='resnext50_32x4d', choices=['resnext101_32x8d', 'resnext50_32x4d', 'resnext18'], help='vision model')
 parser.add_argument('--seed', default=1, type=int, help='random seed')
 parser.add_argument('--workers', default=8, type=int, help='number of data loading workers (default: 8)')
-parser.add_argument('--epochs', default=15, type=int, help='number of total epochs to run')
+parser.add_argument('--epochs', default=16, type=int, help='number of total epochs to run')
 parser.add_argument('--start-epoch', default=0, type=int, help='starts training from this epoch')
 parser.add_argument('--batch-size', default=256, type=int, help='mini-batch size (default: 256)')
 parser.add_argument('--lr', default=0.0005, type=float, help='initial learning rate')
