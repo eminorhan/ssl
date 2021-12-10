@@ -120,14 +120,13 @@ def get_args_parser():
     parser.add_argument('--cache_path', default='', type=str, help='Cache path for the training set for quicker initialization')
     parser.add_argument('--output_dir', default=".", type=str, help='Path to save logs and checkpoints.')
     parser.add_argument('--saveckp_freq', default=1, type=int, help='Save checkpoint every x epochs.')
-    parser.add_argument('--print_freq', default=1000, type=int, help='Print every x iterations.')
+    parser.add_argument('--print_freq', default=1000, type=int, help='Print progress every x iterations.')
     parser.add_argument('--seed', default=0, type=int, help='Random seed.')
     parser.add_argument('--num_workers', default=10, type=int, help='Number of data loading workers per GPU.')
     parser.add_argument("--dist_url", default="env://", type=str, help="""url used to set up
         distributed training; see https://pytorch.org/docs/stable/distributed.html""")
     parser.add_argument("--local_rank", default=0, type=int, help="Please ignore and do not set this argument.")
     return parser
-
 
 def train_dino(args):
     dino_utils.init_distributed_mode(args)
@@ -238,7 +237,7 @@ def train_dino(args):
 
     # ============ init schedulers ... ============
     lr_schedule = dino_utils.cosine_scheduler(
-        args.lr * (args.batch_size_per_gpu * dino_utils.get_world_size()) / 208.,  # linear scaling rule  # TODO: fix warmup
+        args.lr,
         args.min_lr,
         args.epochs, len(data_loader),
         warmup_epochs=args.warmup_epochs,
@@ -253,7 +252,7 @@ def train_dino(args):
     print(f"Loss, optimizer and schedulers ready.")
 
     # ============ optionally resume training ... ============
-    to_restore = {"epoch": 0}
+    to_restore = {"epoch": 3}
     dino_utils.restart_from_checkpoint(
         os.path.join(args.output_dir, "checkpoint.pth"),
         run_variables=to_restore,
@@ -289,8 +288,7 @@ def train_dino(args):
         dino_utils.save_on_master(save_dict, os.path.join(args.output_dir, 'checkpoint.pth'))
         if args.saveckp_freq and epoch % args.saveckp_freq == 0:
             dino_utils.save_on_master(save_dict, os.path.join(args.output_dir, f'checkpoint{epoch:04}.pth'))
-        log_stats = {**{f'train_{k}': v for k, v in train_stats.items()},
-                     'epoch': epoch}
+        log_stats = {**{f'train_{k}': v for k, v in train_stats.items()}, 'epoch': epoch}
         if dino_utils.is_main_process():
             with (Path(args.output_dir) / "log.txt").open("a") as f:
                 f.write(json.dumps(log_stats) + "\n")

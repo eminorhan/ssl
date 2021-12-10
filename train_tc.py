@@ -5,7 +5,7 @@ import torch
 import torchvision
 import torch.backends.cudnn as cudnn
 import torchvision.transforms as transforms
-from utils import train, set_seed
+from utils import train, set_seed, GaussianBlur
 from multiroot_image_folder import MultirootImageFolder
 
 parser = argparse.ArgumentParser(description='Temporal classification training with video data')
@@ -13,7 +13,7 @@ parser.add_argument('--data-dirs', nargs='+', help='list of paths to datasets')
 parser.add_argument('--model', default='resnext101_32x8d', choices=['resnext101_32x8d', 'resnext50_32x4d'], help='model')
 parser.add_argument('--seed', default=1, type=int, help='random seed')
 parser.add_argument('--workers', default=8, type=int, help='number of data loading workers (default: 8)')
-parser.add_argument('--epochs', default=10, type=int, help='number of total epochs to run')
+parser.add_argument('--epochs', default=15, type=int, help='number of total epochs to run')
 parser.add_argument('--start-epoch', default=0, type=int, help='starts training from this epoch')
 parser.add_argument('--batch-size', default=256, type=int, help='mini-batch size (default: 256)')
 parser.add_argument('--lr', default=0.0005, type=float, help='initial learning rate')
@@ -47,7 +47,7 @@ def main():
 
     if args.resume:
         if os.path.isfile(args.resume):
-            print(args.resume)
+            print("=> loading checkpoint found at '{}'".format(args.resume))
             checkpoint = torch.load(args.resume)
             model.load_state_dict(checkpoint['model_state_dict'])
             optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
@@ -59,7 +59,10 @@ def main():
 
     if args.augmentation:
         train_transforms = transforms.Compose([
-            transforms.RandomResizedCrop(256, scale=(0.3, 1.0), ratio=(1.0, 1.0)),
+            transforms.RandomResizedCrop(224),
+            transforms.RandomApply([transforms.ColorJitter(0.9, 0.9, 0.9, 0.5)], p=0.9),
+            transforms.RandomGrayscale(p=0.2),
+            transforms.RandomApply([GaussianBlur([0.1, 2.0])], p=0.5),
             transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
             normalize

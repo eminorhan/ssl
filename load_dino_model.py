@@ -1,3 +1,4 @@
+import torch
 from collections import OrderedDict
 
 def load_dino_model(model, checkpoint_path, verbose=False):

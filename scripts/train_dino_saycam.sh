@@ -10,8 +10,8 @@
 #SBATCH --output=dino_say_%A_%a.out
 
 module purge
-module load cuda-10.2
+module load cuda-11.4
 
-python -u -m torch.distributed.launch --nproc_per_node=4 /misc/vlgscratch4/LakeGroup/emin/ssl/train_dino.py --arch resnext50_32x4d --batch_size_per_gpu 52 --optimizer adamw --weight_decay 0.0 --weight_decay_end 0.0 --global_crops_scale 0.15 1 --local_crops_scale 0.05 0.15 --cache_path '/misc/vlgscratch4/LakeGroup/emin/ssl/cache/S_5fps_288s_dino.pth' --output_dir /misc/vlgscratch4/LakeGroup/emin/ssl/models --data_dirs '/misc/vlgscratch4/LakeGroup/emin/headcam/preprocessing/S_5fps_288s'
+python -u -m torch.distributed.launch --nproc_per_node=4 /misc/vlgscratch4/LakeGroup/emin/ssl/train_dino.py --use_fp16 True --arch resnext50_32x4d --batch_size_per_gpu 64 --optimizer adamw --weight_decay 0.0 --weight_decay_end 0.0 --global_crops_scale 0.15 1 --local_crops_scale 0.05 0.15 --cache_path '/misc/vlgscratch4/LakeGroup/emin/ssl/cache/SAY_5_300_vis.pth' --output_dir /misc/vlgscratch4/LakeGroup/emin/ssl/models --data_dirs '/misc/vlgscratch4/LakeGroup/emin/headcam/preprocessing/SAY_5fps_288s'
 
 echo "Done"
