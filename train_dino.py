@@ -71,8 +71,7 @@ def get_args_parser():
     parser.add_argument('--teacher_temp', default=0.04, type=float, help="""Final value (after linear warmup)
         of the teacher temperature. For most experiments, anything above 0.07 is unstable. We recommend
         starting with the default value of 0.04 and increase this slightly if needed.""")
-    parser.add_argument('--warmup_teacher_temp_epochs', default=0, type=int,
-        help='Number of warmup epochs for the teacher temperature (Default: 30).')
+    parser.add_argument('--warmup_teacher_temp_epochs', default=0, type=int, help='Number of warmup epochs for the teacher temperature')
 
     # Training/Optimization parameters
     parser.add_argument('--use_fp16', type=dino_utils.bool_flag, default=False, help="""Whether or not
@@ -117,15 +116,16 @@ def get_args_parser():
 
     # Misc
     parser.add_argument('--data_dirs', nargs='+', help='list of paths to datasets')
-    parser.add_argument('--cache_path', default='', type=str, help='Cache path for the training set for quicker initialization')
+    parser.add_argument('--cache_path', default='', type=str, help='Cache path for the training set for quicker init')
     parser.add_argument('--output_dir', default=".", type=str, help='Path to save logs and checkpoints.')
     parser.add_argument('--saveckp_freq', default=1, type=int, help='Save checkpoint every x epochs.')
     parser.add_argument('--print_freq', default=1000, type=int, help='Print progress every x iterations.')
-    parser.add_argument('--seed', default=0, type=int, help='Random seed.')
-    parser.add_argument('--num_workers', default=10, type=int, help='Number of data loading workers per GPU.')
-    parser.add_argument("--dist_url", default="env://", type=str, help="""url used to set up
-        distributed training; see https://pytorch.org/docs/stable/distributed.html""")
+    parser.add_argument('--seed', default=1, type=int, help='Random seed.')
+    parser.add_argument('--num_workers', default=16, type=int, help='Number of data loading workers per GPU.')
+    parser.add_argument("--dist_url", default="env://", type=str, help='url used to set up distributed training')
     parser.add_argument("--local_rank", default=0, type=int, help="Please ignore and do not set this argument.")
+    parser.add_argument('--fraction', default=1.0, type=float, help='fraction of training data to retain')
+
     return parser
 
 def train_dino(args):
@@ -147,7 +147,7 @@ def train_dino(args):
         dataset.transform = transform
     else:
         print("Building training dataset from scratch")
-        dataset = MultirootImageFolder(args.data_dirs, 1.0, transform)
+        dataset = MultirootImageFolder(args.data_dirs, args.fraction, transform)
         torch.save(dataset, args.cache_path)
 
     sampler = torch.utils.data.DistributedSampler(dataset, shuffle=True)
@@ -166,10 +166,7 @@ def train_dino(args):
     args.arch = args.arch.replace("deit", "vit")
     # if the network is a vision transformer (i.e. vit_tiny, vit_small, vit_base)
     if args.arch in vits.__dict__.keys():
-        student = vits.__dict__[args.arch](
-            patch_size=args.patch_size,
-            drop_path_rate=0.1,  # stochastic depth
-        )
+        student = vits.__dict__[args.arch](patch_size=args.patch_size, drop_path_rate=0.1)
         teacher = vits.__dict__[args.arch](patch_size=args.patch_size)
         embed_dim = student.embed_dim
     # otherwise, we check if the architecture is in torchvision models
@@ -252,7 +249,7 @@ def train_dino(args):
     print(f"Loss, optimizer and schedulers ready.")
 
     # ============ optionally resume training ... ============
-    to_restore = {"epoch": 3}
+    to_restore = {"epoch": 0}
     dino_utils.restart_from_checkpoint(
         os.path.join(args.output_dir, "checkpoint.pth"),
         run_variables=to_restore,
@@ -292,6 +289,7 @@ def train_dino(args):
         if dino_utils.is_main_process():
             with (Path(args.output_dir) / "log.txt").open("a") as f:
                 f.write(json.dumps(log_stats) + "\n")
+
     total_time = time.time() - start_time
     total_time_str = str(datetime.timedelta(seconds=int(total_time)))
     print('Training time {}'.format(total_time_str))
@@ -352,6 +350,10 @@ def train_one_epoch(student, teacher, teacher_without_ddp, dino_loss, data_loade
         metric_logger.update(lr=optimizer.param_groups[0]["lr"])
         metric_logger.update(wd=optimizer.param_groups[0]["weight_decay"])
         
+        # hacky way to save checkpoint before job gets cancelled after 2 days
+        if it == 35000:
+            break
+
     # gather the stats from all processes
     metric_logger.synchronize_between_processes()
     print("Averaged stats:", metric_logger)
@@ -431,6 +433,7 @@ class DataAugmentationDINO(object):
 
         # first global crop
         self.global_transfo1 = transforms.Compose([
+            transforms.Resize(256), transforms.CenterCrop(224),  # this is to make sure same as train tc set up
             transforms.RandomResizedCrop(224, scale=global_crops_scale, interpolation=Image.BICUBIC),
             flip_and_color_jitter,
             dino_utils.GaussianBlur(1.0),

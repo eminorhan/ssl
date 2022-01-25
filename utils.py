@@ -148,7 +148,7 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
 
     return top1.avg.cpu().numpy()
 
-def train_labeleds(train_loader, model, criterion, optimizer, epoch, args):
+def train_default(train_loader, model, criterion, optimizer, epoch, args):
     batch_time = AverageMeter('Time', ':6.3f')
     data_time = AverageMeter('Data', ':6.3f')
     losses = AverageMeter('Loss', ':.4e')
@@ -251,7 +251,7 @@ def validate(val_loader, model):
     model.eval()
 
     with torch.no_grad():
-        for i, (images, target) in enumerate(val_loader):
+        for _, (images, target) in enumerate(val_loader):
 
             images = images.cuda(non_blocking=True)
             target = target.cuda(non_blocking=True)
@@ -268,7 +268,7 @@ def validate(val_loader, model):
 
     return top1.avg.cpu().numpy()
 
-def validate_labeleds(val_loader, model, args):
+def validate_labeleds(val_loader, model):
     batch_time = AverageMeter('Time', ':6.3f')
     top1 = AverageMeter('Acc@1', ':6.2f')
 
@@ -409,7 +409,7 @@ def load_model(args):
         model = torch.nn.DataParallel(model).cuda()
     elif args.model_name.startswith('TC'):
         model_path = os.path.join(args.model_dir, args.model_name + '.tar')
-        model = models.resnext50_32x4d(pretrained=False)
+        model = models.resnext101_32x8d(pretrained=False)
         model.fc = torch.nn.Linear(in_features=2048, out_features=args.num_outs, bias=True)
         model = torch.nn.DataParallel(model).cuda()
         checkpoint = torch.load(model_path)

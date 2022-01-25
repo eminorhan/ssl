@@ -1,7 +1,7 @@
 import argparse
 import torch
 import torch.backends.cudnn as cudnn
-from utils import set_parameter_requires_grad, load_dataloaders_labeleds, load_model, train_labeleds, validate_labeleds
+from utils import load_dataloaders_labeleds, load_model, train_labeleds, validate_labeleds
 
 parser = argparse.ArgumentParser(description='Finetuning or linear probing on labeled S')
 parser.add_argument('--labeleds-dir', type=str, default='/misc/vlgscratch4/LakeGroup/shared_data/S_clean_labeled_data_1fps_5/', help='path to labeled S dataset')

@@ -20,10 +20,10 @@ module load cuda-11.4
 
 #python -u /misc/vlgscratch4/LakeGroup/emin/ssl/finetune_labeleds.py --model-name 'TC-Y-resnext' --num-outs 1718 --num-classes 26 --print-freq 10
 
-#python -u /misc/vlgscratch4/LakeGroup/emin/ssl/finetune_labeleds.py --model-name 'DINO-SAY-resnext' --num-classes 26 --print-freq 10
+python -u /misc/vlgscratch4/LakeGroup/emin/ssl/finetune_labeleds.py --model-name 'DINO-SAY-resnext' --num-classes 26 --print-freq 10
 
 #python -u /misc/vlgscratch4/LakeGroup/emin/ssl/finetune_labeleds.py --model-name 'imagenet' --num-classes 26 --print-freq 10
 
-python -u /misc/vlgscratch4/LakeGroup/emin/ssl/finetune_labeleds.py --model-name 'random' --num-classes 26 --print-freq 10
+#python -u /misc/vlgscratch4/LakeGroup/emin/ssl/finetune_labeleds.py --model-name 'random' --num-classes 26 --print-freq 10
 
 echo "Done"

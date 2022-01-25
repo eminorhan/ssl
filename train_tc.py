@@ -59,7 +59,8 @@ def main():
 
     if args.augmentation:
         train_transforms = transforms.Compose([
-            transforms.RandomResizedCrop(224),
+            transforms.Resize(256), transforms.CenterCrop(224),  # this is to make sure same as train tc set up
+            transforms.RandomResizedCrop(224, scale=(0.08, 1.0)),
             transforms.RandomApply([transforms.ColorJitter(0.9, 0.9, 0.9, 0.5)], p=0.9),
             transforms.RandomGrayscale(p=0.2),
             transforms.RandomApply([GaussianBlur([0.1, 2.0])], p=0.5),
